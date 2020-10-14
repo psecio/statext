@@ -1,0 +1,34 @@
+{
+    "name":"psecio/statext",
+    "type":"library",
+    "description":"A static site generation tool",
+    "keywords":["static", "website", "generation"],
+    "homepage":"https://github.com/psecio/statext.git",
+    "license":"MIT",
+    "authors":[
+        {
+            "name":"Chris Cornutt",
+            "email":"ccornutt@phpdeveloper.org",
+            "homepage":"http://www.phpdeveloper.org/"
+        }
+    ],
+    "require":{
+        "php": ">=7.5",
+        "symfony/console": "^5.1",
+        "twig/twig": "^3.0",
+        "league/commonmark": "^1.5"
+    },
+    "require-dev": {
+    },
+    "autoload": {
+        "psr-4": {
+            "Psecio\\Statext\\": "src/"
+        }
+    },
+    "config": {
+        "bin-dir": "bin"
+    },
+    "bin": [
+        "bin/statext"
+    ]
+}
