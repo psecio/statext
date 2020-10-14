@@ -49,41 +49,30 @@ class BuildCommand extends Command
         return $meta;
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    private function parseSourceContent($path, $source, $target)
     {
-        $source = $input->getOption('source');
-        if ($source == null) {
-            throw new \Exception();
-            $output->writeln('<error>Source path is required (use --source)</error>');
-            return Command::FAILURE;
-        }
-        $sourcePath = realpath(getcwd().'/'.$source);
-        if ($sourcePath == false) {
-            $output->writeln('<error>Source path invalid</error>');
-            return Command::FAILURE;
-        }
-
-        $target = $input->getOption('target');
-        if ($target == null) {
-            $output->writeln('<error>Target path is required (use --target)</error>');
-            return Command::FAILURE;
-        }
-        $targetPath = realpath(getcwd().'/'.$input->getOption('target'));
-        if ($targetPath == false) {
-            $output->writeln('<error>Target path invalid</error>');
-            return Command::FAILURE;
-        }
-
         $content = new Collection();
-
-        $directory = new \RecursiveDirectoryIterator($sourcePath.'/content');
+        $directory = new \RecursiveDirectoryIterator($path);
         $iterator = new \RecursiveIteratorIterator($directory);
+
+        $targetPath = realpath(getcwd().'/'.$target);
+        if ($targetPath == false) {
+            throw new \Exception('Target path is invalid: '.$targetPath);
+        }
 
         foreach ($iterator as $info) {
             if (!$info->isFile()) { continue; }
 
             // Get the contents so we can parse out the front matter
             $meta = [];
+            $pathname = $info->getPathname();
+
+            // If the pathname doesn't end in .md, ignore it
+            $ext = substr($pathname, strrpos($pathname, '.'), strlen($pathname));
+            if (strtolower($ext) !== '.md') {
+                continue;
+            }
+
             $contents = file_get_contents($info->getPathname());
             $meta = $this->parseMeta($contents);
 
@@ -114,33 +103,59 @@ class BuildCommand extends Command
             $content->add($file);
         }
 
-        $loader = new \Twig\Loader\FilesystemLoader($sourcePath.'/templates');
-        $twig = new \Twig\Environment($loader);
+        return $content;
+    }
 
-        // Clone the page content collection so any other iteration doesn't impact it
-        $twig->addGlobal('pages', clone $content);
-
-        // For each file, translate it using Twig and write it out to the target directory
-
-        $converter = new CommonMarkConverter([
-            'html_input' => 'strip',
-            'allow_unsafe_links' => false,
-        ]);
-
-        foreach ($content as $index => $item) {
-            print_r($item);
-
-            $markup = $converter->convertToHtml(file_get_contents($item->getSourcePath()));
-            $rendered = $twig->render($item->getTemplate(), [
-                'markup' => $markup
-            ]);
-            echo "writing to: ".$item->getOutputPath()."\n";
-
-            file_put_contents($item->getOutputPath(), $rendered);
+    protected function execute(InputInterface $input, OutputInterface $output)
+    {
+        $source = $input->getOption('source');
+        if ($source == null) {
+            throw new \Exception();
+            $output->writeln('<error>Source path is required (use --source)</error>');
+            return Command::FAILURE;
+        }
+        $sourcePath = realpath(getcwd().'/'.$source);
+        if ($sourcePath == false) {
+            $output->writeln('<error>Source path invalid</error>');
+            return Command::FAILURE;
         }
 
-        $output->writeln('<fg=green>Rendering complete</>');
+        $target = $input->getOption('target');
+        if ($target == null) {
+            $output->writeln('<error>Target path is required (use --target)</error>');
+            return Command::FAILURE;
+        }
 
-        return Command::SUCCESS;
+        try {
+            $content = $this->parseSourceContent($sourcePath.'/content', $source, $target);
+
+            $loader = new \Twig\Loader\FilesystemLoader($sourcePath.'/templates');
+            $twig = new \Twig\Environment($loader);
+
+            // Clone the page content collection so any other iteration doesn't impact it
+            $twig->addGlobal('pages', clone $content);
+
+            // For each file, translate it using Twig and write it out to the target directory
+            $converter = new CommonMarkConverter([
+                'html_input' => 'strip',
+                'allow_unsafe_links' => false,
+            ]);
+
+            foreach ($content as $index => $item) {
+                $markup = $converter->convertToHtml(file_get_contents($item->getSourcePath()));
+                $rendered = $twig->render($item->getTemplate(), [
+                    'markup' => $markup
+                ]);
+                file_put_contents($item->getOutputPath(), $rendered);
+            }
+
+            $output->writeln('<fg=green>Rendering complete</>');
+
+            return Command::SUCCESS;
+
+        } catch (\Exception $e) {
+            $output->writeln('<error>'.$e->getMessage().'</error>');
+            return Command::FAILURE;
+        }
     }
 }
