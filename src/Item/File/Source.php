@@ -5,5 +5,6 @@ namespace Psecio\Statext\Item\File;
 class Source extends \Psecio\Statext\Item
 {
     protected $path = '';
-    protected $name = '';   
+    protected $name = '';
+    protected $contents = '';
 }

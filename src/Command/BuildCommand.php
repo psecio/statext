@@ -32,10 +32,15 @@ class BuildCommand extends Command
             ;
     }
 
-    private function parseMeta($contents)
+    private function parseMeta(&$contents)
     {
         $meta = [];
         preg_match('/[\-]{3,}(.*?)[\-]{3,}/s', $contents, $matches);
+        
+        if (isset($matches[0])) {
+            // Remove the front matter from the content
+            $contents = str_replace($matches[0], '', $contents);
+        }
 
         if (isset($matches[1])) {
             $parts = explode("\n", trim($matches[1]));
@@ -91,6 +96,7 @@ class BuildCommand extends Command
                 'source' => new Source([
                     'path' => $info->getPathname(),
                     'name' => $info->getFilename(),
+                    'contents' => $contents
                 ]),
                 'output' => new Output([
                     'path' => $outputPath
@@ -142,7 +148,7 @@ class BuildCommand extends Command
             ]);
 
             foreach ($content as $index => $item) {
-                $markup = $converter->convertToHtml(file_get_contents($item->getSourcePath()));
+                $markup = $converter->convertToHtml($item->getContents());
                 $rendered = $twig->render($item->getTemplate(), [
                     'markup' => $markup
                 ]);

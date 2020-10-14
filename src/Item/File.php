@@ -44,6 +44,11 @@ class File extends \Psecio\Statext\Item
         return $this->display->path;
     }
 
+    public function getContents()
+    {
+        return $this->source->contents;
+    }
+
     public function getTemplate()
     {
         return $this->template;
