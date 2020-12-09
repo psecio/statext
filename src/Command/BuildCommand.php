@@ -243,9 +243,12 @@ class BuildCommand extends Command
 
         $this->loadConfig($sourcePath);
 
-        $events = $this->parseEvents($sourcePath.'/content/events.ics');
-        if (count($events) > 0) {
-            $output->writeln('<fg=green>'.count($events).' events found</>');
+        $events = [];
+        if (is_file($sourcePath.'/content/events.ics')) {
+            $events = $this->parseEvents($sourcePath.'/content/events.ics');
+            if (count($events) > 0) {
+                $output->writeln('<fg=green>'.count($events).' events found and loaded</>');
+            }
         }
 
         // Before we write out the content, first clear out the target directory and remake the content path
