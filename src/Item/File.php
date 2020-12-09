@@ -4,10 +4,10 @@ namespace Psecio\Statext\Item;
 
 class File extends \Psecio\Statext\Item
 {
-    protected $template = 'default.twig';
     protected $source = [];
     protected $display = [];
     protected $output = [];
+    protected $type = 'file';
 
     public function __construct(array $data = [])
     {
@@ -44,24 +44,33 @@ class File extends \Psecio\Statext\Item
         return $this->display->path;
     }
 
+    public function getOutputType()
+    {
+        return $this->output->type;
+    }
+
     public function getContents()
     {
         return $this->source->contents;
     }
 
-    public function getTemplate()
+    public function getLayout()
     {
-        return $this->template;
+        return $this->output->layout;
     }
 
     public function getTitle()
     {
         $title = $this->getMeta('title');
-        var_export($title);
-
         if ($title == null) {
             return $this->getOutputFile();
         }
         return $title;
+    }
+
+    public function getDescription()
+    {
+        $desc = $this->getMeta('description');
+        return ($desc == null) ? '' : $desc;
     }
 }
