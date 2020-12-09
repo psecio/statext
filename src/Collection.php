@@ -48,4 +48,9 @@ class Collection implements \Iterator, \Countable
     {
         return count($this->items);
     }
+
+    public function toArray()
+    {
+        return $this->items;
+    }
 }
