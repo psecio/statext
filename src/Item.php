@@ -43,8 +43,12 @@ class Item
         return null;
     }
 
-    public function getMeta($key)
+    public function getMeta($key = null)
     {
+        if ($key == null) {
+            return $this->meta;
+        }
+
         if (array_key_exists($key, $this->meta) == false) {
             return null;
         }
